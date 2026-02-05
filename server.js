@@ -230,7 +230,7 @@ function overlayHtml(feed) {
   <div id="v">--</div>
   <script>
     const FEED = "${feed}";
-    const POLL_MS = 20000;
+    const POLL_MS = 5000;
 
     function fmt(n){
       if(!Number.isFinite(n)) return "--";
