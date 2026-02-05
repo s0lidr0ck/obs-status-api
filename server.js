@@ -2,6 +2,8 @@ import express from "express";
 
 const app = express();
 app.use(express.json());
+// Some pushers use application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: false }));
 
 const BUILD_ID = process.env.BUILD_ID || "dev";
 
@@ -53,6 +55,32 @@ app.get("/routes", (req, res) => {
 app.get("/status", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ build: "overlay-v1", buildId: BUILD_ID, ...latest });
+});
+
+app.get("/updates/summary", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const byFeed = {};
+  for (const e of events) {
+    const f = e.feed || "(empty)";
+    if (!byFeed[f]) byFeed[f] = { total: 0, applied: 0, ignored: 0, lastTs: null, lastOu: null, lastRawFeed: null };
+    byFeed[f].total += 1;
+    if (e.applied) byFeed[f].applied += 1;
+    else byFeed[f].ignored += 1;
+    byFeed[f].lastTs = e.ts;
+    byFeed[f].lastOu = e.ou ?? null;
+    byFeed[f].lastRawFeed = e.rawFeed ?? null;
+  }
+  res.json({
+    build: "overlay-v1",
+    buildId: BUILD_ID,
+    serverTime: new Date().toISOString(),
+    maxEvents: MAX_EVENTS,
+    counts: {
+      totalEvents: events.length
+    },
+    byFeed,
+    latest
+  });
 });
 
 // Inspect recent incoming updates for debugging (in-memory, last MAX_EVENTS)
@@ -111,9 +139,9 @@ app.post("/status", (req, res) => {
     return res.json({ ok: true, applied, ignored });
   }
 
-  const rawFeed = req.body?.feed;
+  const rawFeed = req.body?.feed ?? req.query?.feed;
   const feed = normalizeFeed(rawFeed);
-  const ouNum = Number(req.body?.ou);
+  const ouNum = Number(req.body?.ou ?? req.query?.ou);
   const ok = Boolean(latest.values[feed]);
 
   recordEvent({
