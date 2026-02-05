@@ -1,6 +1,8 @@
 import express from "express";
 
 const app = express();
+// If behind a reverse proxy (EasyPanel/Traefik/Nginx), this makes req.ip honor X-Forwarded-For
+app.set("trust proxy", true);
 app.use(express.json());
 // Some pushers use application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: false }));
@@ -62,13 +64,28 @@ app.get("/updates/summary", (req, res) => {
   const byFeed = {};
   for (const e of events) {
     const f = e.feed || "(empty)";
-    if (!byFeed[f]) byFeed[f] = { total: 0, applied: 0, ignored: 0, lastTs: null, lastOu: null, lastRawFeed: null };
+    if (!byFeed[f]) {
+      byFeed[f] = {
+        total: 0,
+        applied: 0,
+        ignored: 0,
+        lastTs: null,
+        lastOu: null,
+        lastRawFeed: null,
+        lastIp: null,
+        lastXff: null,
+        lastUa: null
+      };
+    }
     byFeed[f].total += 1;
     if (e.applied) byFeed[f].applied += 1;
     else byFeed[f].ignored += 1;
     byFeed[f].lastTs = e.ts;
     byFeed[f].lastOu = e.ou ?? null;
     byFeed[f].lastRawFeed = e.rawFeed ?? null;
+    byFeed[f].lastIp = e.ip ?? null;
+    byFeed[f].lastXff = e.xff ?? null;
+    byFeed[f].lastUa = e.ua ?? null;
   }
   res.json({
     build: "overlay-v1",
@@ -106,6 +123,7 @@ app.post("/status", (req, res) => {
 
   const reqMeta = {
     ip: req.ip,
+    xff: req.get("x-forwarded-for") || null,
     ua: req.get("user-agent") || null
   };
 
