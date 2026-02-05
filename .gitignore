@@ -15,3 +15,6 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Local tooling / secrets folder (do not commit)
+MultiChannel Monitor/
+

@@ -204,13 +204,20 @@ function overlayHtml(feed) {
     #v{
       font-weight:900;
       font-size:64px;
-      text-shadow:0 3px 10px rgba(0,0,0,0.75);
-      background:rgba(0,0,0,0.65);
+      /* Stronger shadow + subtle outline so it stays readable on bright video */
+      text-shadow:
+        0 3px 14px rgba(0,0,0,0.95),
+        0 0 2px rgba(0,0,0,0.95);
+      -webkit-text-stroke: 2px rgba(0,0,0,0.85);
+      /* More opaque backdrop + optional blur (where supported) */
+      background:rgba(0,0,0,0.82);
+      backdrop-filter: blur(6px);
       border-radius:14px;
       padding:10px 16px;
       display:inline-block;
-      color:rgba(255,255,255,0.5);
+      color:rgba(255,255,255,0.92);
       animation:none;
+      border:1px solid rgba(255,255,255,0.12);
     }
     @keyframes pulse{
       0%{transform:scale(1);}
@@ -231,17 +238,18 @@ function overlayHtml(feed) {
       return ""+n;
     }
     function strength(abs){
+      // Keep a high minimum opacity for readability on light backgrounds
       if(abs>=60) return 1.0;
-      if(abs>=45) return 0.75;
-      if(abs>=30) return 0.5;
-      if(abs>=15) return 0.3;
-      return 0.15;
+      if(abs>=45) return 0.95;
+      if(abs>=30) return 0.90;
+      if(abs>=15) return 0.85;
+      return 0.80;
     }
     function setVal(n){
       const el=document.getElementById("v");
       if(!Number.isFinite(n)){
         el.textContent="--";
-        el.style.color="rgba(255,255,255,0.5)";
+        el.style.color="rgba(255,255,255,0.92)";
         el.style.animation="none";
         return;
       }
@@ -252,7 +260,7 @@ function overlayHtml(feed) {
       // Over = RED, Under = GREEN
       if(n>0) el.style.color="rgba(255,60,60,"+op+")";
       else if(n<0) el.style.color="rgba(46,204,113,"+op+")";
-      else el.style.color="rgba(255,255,255,0.3)";
+      else el.style.color="rgba(255,255,255,0.85)";
 
       el.style.animation = (abs>=60) ? "pulse 1.2s ease-in-out infinite" : "none";
     }
