@@ -127,6 +127,16 @@ app.post("/status", (req, res) => {
     ua: req.get("user-agent") || null
   };
 
+  // --- debug logging: shows every inbound POST with sender + payload summary ---
+  const bodySnippet = JSON.stringify(req.body ?? {}).slice(0, 300);
+  const feeds = req.body?.values
+    ? Object.keys(req.body.values).join(",")
+    : req.body?.feed ?? req.query?.feed ?? "(none)";
+  console.log(
+    `[POST /status] ${now} ip=${reqMeta.ip} xff=${reqMeta.xff} ua=${reqMeta.ua} ct=${req.get("content-type")} feeds=${feeds} body=${bodySnippet}`
+  );
+  // --- end debug logging ---
+
   const applied = [];
   const ignored = [];
 
